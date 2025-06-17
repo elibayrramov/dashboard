@@ -148,7 +148,7 @@ def _get_date_range():
     if requested_end:
         default_end = requested_end
     return default_start, default_end
-    
+  
 @app.route("/")
 @login_required
 def home():
@@ -159,7 +159,10 @@ def home():
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Manager Dashboard Ana Səhifə</title>
+
+  <!-- favicon əlavə olundu -->
   <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
+
   <!-- Tailwind + dark mode konfiqurasiyası -->
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
   <script>
@@ -187,7 +190,7 @@ def home():
         ('Technician Status Dashboard','status','bar-chart-2','Hər texnik üçün status paylanması','🔧'),
         ('Average Duration Dashboard','duration','clock','Texniklərin orta xidmət vaxtları','⏱️'),
         ('Equipment Stats Dashboard','equipment','tool','Avadanlıq istifadəsi və xərcləri','🛠️'),
-        ('Profit Report Dashboard','profit','dollar-sign','Texniklərin gəlir‐xərc','💰'),
+        ('Profit Report Dashboard','profit','dollar-sign','Texniklərin gəlir‑xərc','💰'),
       ] %}
       {% for title, endpoint, icon, desc, emoji in cards %}
       <a href="{{ url_for(endpoint + '_dashboard') }}"
