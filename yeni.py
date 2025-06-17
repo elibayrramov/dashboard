@@ -159,6 +159,7 @@ def home():
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Manager Dashboard Ana Səhifə</title>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.ico') }}">
   <!-- Tailwind + dark mode konfiqurasiyası -->
   <script src="https://cdn.tailwindcss.com?plugins=forms,typography"></script>
   <script>
