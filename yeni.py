@@ -227,6 +227,7 @@ def home():
     """
     return render_template_string(html)
 
+
 # ---------------------------------------------
 # 4) Technician Status Dashboard
 # ---------------------------------------------
@@ -888,6 +889,31 @@ def api_technician_status():
 
     result = sorted(stats.values(), key=lambda x: (x["success_count"] + x["failed_count"] + x["stopped_count"]), reverse=True)
     return jsonify(result), 200
+
+@app.route("/api/technician-history", methods=["GET"])
+@login_required
+def api_technician_history():
+    start_date, end_date = _get_date_range()
+    try:
+        resp = (supabase.table("technician_activity").select("activity_id, technician_id, activity_date, start_time, end_time, activity_type, status, technicians(full_name), technician_activity_equipment(quantity, equipment(name))").gte("activity_date", start_date).lte("activity_date", end_date).order("activity_date", {"ascending": False}).order("start_time", {"ascending": False}).execute())
+    except APIError as e:
+        return jsonify({"error": str(e)}), 400
+    data = []
+    for r in resp.data:
+        eqs = []
+        for link in r.get("technician_activity_equipment", []):
+            eq = link.get("equipment") or {}
+            eqs.append({"name": eq.get("name", "–"), "qty": link.get("quantity", 0)})
+        data.append({
+            "full_name": r.get("technicians", {}).get("full_name", "Unknown"),
+            "date": r["activity_date"],
+            "start": r.get("start_time"),
+            "end": r.get("end_time"),
+            "type": r.get("activity_type", ""),
+            "status": r.get("status", ""),
+            "equipment": eqs
+        })
+    return jsonify(data), 200
 
 @app.route("/api/avg-duration", methods=["GET"])
 @login_required
