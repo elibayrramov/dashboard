@@ -227,6 +227,113 @@ def home():
     """
     return render_template_string(html)
 
+# 8) Aktivlik Tarixçəsi Dashboard (API‑dən istifadə edən versiya)
+@app.route("/history")
+@login_required
+def history_dashboard():
+    html = r"""
+<!DOCTYPE html>
+<html lang="az" class="transition-colors">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aktivlik Tarixçəsi</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-100">
+  <nav class="bg-white dark:bg-gray-800 shadow-md">
+    <div class="container mx-auto px-6 py-4 flex justify-between items-center">
+      <h1 class="text-2xl font-semibold">Aktivlik Tarixçəsi</h1>
+      <a href="/" class="text-indigo-600 hover:underline">🏠 Ana Səhifə</a>
+    </div>
+  </nav>
+
+  <main class="container mx-auto px-6 py-8">
+    <!-- Tarix filter -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+      <div>
+        <label for="startDate" class="block text-sm font-medium mb-1">Başlanğıc Tarix</label>
+        <input type="date" id="startDate" class="w-full px-3 py-2 border rounded-lg" />
+      </div>
+      <div>
+        <label for="endDate" class="block text-sm font-medium mb-1">Son Tarix</label>
+        <input type="date" id="endDate" class="w-full px-3 py-2 border rounded-lg" />
+      </div>
+      <div class="flex items-end">
+        <button id="btnLoad" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg">Yüklə</button>
+      </div>
+    </div>
+
+    <!-- Cədvəl -->
+    <div class="overflow-x-auto">
+      <table class="min-w-full bg-white dark:bg-gray-800 shadow rounded-lg">
+        <thead class="bg-gray-50 dark:bg-gray-700">
+          <tr>
+            <th class="px-4 py-2">#</th>
+            <th class="px-4 py-2">Texnik</th>
+            <th class="px-4 py-2">Tarix</th>
+            <th class="px-4 py-2">Başla–Bitir</th>
+            <th class="px-4 py-2">Tip</th>
+            <th class="px-4 py-2">Status</th>
+            <th class="px-4 py-2">Avadanlıqlar</th>
+          </tr>
+        </thead>
+        <tbody id="historyTable" class="divide-y divide-gray-200 dark:divide-gray-700">
+          <!-- JS dolduracaq -->
+        </tbody>
+      </table>
+    </div>
+  </main>
+
+  <script>
+    function buildUrl() {
+      const base = window.location.origin;
+      const s = document.getElementById("startDate").value;
+      const e = document.getElementById("endDate").value;
+      const qp = [];
+      if (s) qp.push("start_date=" + s);
+      if (e) qp.push("end_date=" + e);
+      return base + "/api/technician-history" + (qp.length ? "?" + qp.join("&") : "");
+    }
+
+    async function loadHistory() {
+      const res = await fetch(buildUrl());
+      const data = await res.json();
+      const tbody = document.getElementById("historyTable");
+      tbody.innerHTML = "";
+      data.forEach((r,i) => {
+        const eqList = r.equipment.length
+          ? "<ul class='list-disc list-inside'>" + 
+              r.equipment.map(q=>`<li>${q.name} × ${q.qty}</li>`).join("") +
+            "</ul>"
+          : "Yoxdur";
+        tbody.innerHTML += `
+          <tr class="hover:bg-gray-100 dark:hover:bg-gray-700">
+            <td class="px-4 py-2">${i+1}</td>
+            <td class="px-4 py-2">${r.full_name}</td>
+            <td class="px-4 py-2">${r.date}</td>
+            <td class="px-4 py-2 text-center">${r.start || '—'} – ${r.end || '—'}</td>
+            <td class="px-4 py-2">${r.type}</td>
+            <td class="px-4 py-2">${r.status}</td>
+            <td class="px-4 py-2">${eqList}</td>
+          </tr>`;
+      });
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      // bu ayın 1-dən bu günə standart
+      const t = new Date().toISOString().slice(0,10);
+      document.getElementById("startDate").value = t.replace(/-.+$/, "-01");
+      document.getElementById("endDate").value = t;
+      loadHistory();
+      document.getElementById("btnLoad").addEventListener("click", loadHistory);
+    });
+  </script>
+</body>
+</html>
+    """
+    return render_template_string(html)
+
 
 # ---------------------------------------------
 # 4) Technician Status Dashboard
@@ -248,46 +355,57 @@ def status_dashboard():
   <nav class="bg-white dark:bg-gray-800 shadow-md">
     <div class="container mx-auto px-6 py-4 flex justify-between items-center">
       <h1 class="text-2xl font-semibold">Technician Status</h1>
-      <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
-        <i data-feather="moon"></i>
-      </button>
+      <div class="flex items-center space-x-4">
+        <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+          <i data-feather="moon"></i>
+        </button>
+      </div>
     </div>
   </nav>
+
   <main class="container mx-auto px-6 py-8 space-y-8">
     <!-- Filter -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <div>
         <label for="startDate" class="block text-sm font-medium mb-1">Başlanğıc Tarix</label>
-        <input type="date" id="startDate" class="w-full px-3 py-2 border rounded-lg" />
+        <input type="date" id="startDate" class="w-full px-3 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition" />
       </div>
       <div>
         <label for="endDate" class="block text-sm font-medium mb-1">Son Tarix</label>
-        <input type="date" id="endDate" class="w-full px-3 py-2 border rounded-lg" />
+        <input type="date" id="endDate" class="w-full px-3 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition" />
       </div>
       <div class="flex items-end">
-        <button id="btnRefresh" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg">Yenilə</button>
+        <button id="btnRefresh" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+          Yenilə
+        </button>
       </div>
     </div>
+
     <!-- Metrics -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
-        <h3 class="text-sm font-medium text-gray-500">Ümumi Technician</h3>
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow hover:shadow-lg transition">
+        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Ümumi Technician</h3>
         <p id="totalTech" class="mt-2 text-3xl font-bold">--</p>
       </div>
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow hover:shadow-lg transition">
         <h3 class="text-sm font-medium text-green-600">Uğurla tamamlandı</h3>
         <p id="sumSuccess" class="mt-2 text-3xl font-bold">--</p>
       </div>
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow hover:shadow-lg transition">
         <h3 class="text-sm font-medium text-red-600">Uğursuz oldu</h3>
         <p id="sumFailed" class="mt-2 text-3xl font-bold">--</p>
       </div>
     </div>
+
     <!-- Chart -->
+    <!-- Chart (Centered & Smaller) -->
     <section class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow max-w-md mx-auto">
       <h2 class="text-lg font-semibold mb-4 text-center">Status Paylanması</h2>
-      <canvas id="statusChart" class="w-full h-48"></canvas>
+      <div class="flex justify-center">
+        <canvas id="statusChart" class="w-full h-48"></canvas>
+      </div>
     </section>
+
     <!-- Table -->
     <section class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
       <h2 class="text-lg font-semibold mb-4">Detallı Technician Status</h2>
@@ -295,75 +413,92 @@ def status_dashboard():
         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead class="bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th class="px-4 py-2">#</th>
-              <th class="px-4 py-2">Adı</th>
-              <th class="px-4 py-2 text-green-600">Uğurla</th>
-              <th class="px-4 py-2 text-red-600">Uğursuz</th>
-              <th class="px-4 py-2">Dayandırıldı</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">#</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Adı</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-green-600 uppercase">Uğurla</th>
+              <th class="px-4 py-2 text-left text-xs font-medium text-red-600 uppercase">Uğursuz</th>
             </tr>
           </thead>
-          <tbody id="statusTable" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"></tbody>
+          <tbody id="statusTable" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            <!-- JS will inject rows here -->
+          </tbody>
+        </table>
       </div>
     </section>
-    <!-- History Section -->
-    <section class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
-      <h2 class="text-lg font-semibold mb-4">🔍 Aktivlik Tarixçəsi (Detallı)</h2>
-      <div id="historyContainer" class="space-y-6"></div>
-    </section>
   </main>
+
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     feather.replace();
     const toggle = document.getElementById('theme-toggle');
-    toggle.addEventListener('click', () => document.documentElement.classList.toggle('dark'));
+    toggle.addEventListener('click', () => {
+      document.documentElement.classList.toggle('dark');
+    });
+
     function buildUrl(endpoint) {
       const base = window.location.origin;
-      const params = [];
-      const s = document.getElementById("startDate").value;
-      const e = document.getElementById("endDate").value;
-      if (s) params.push(`start_date=${s}`);
-      if (e) params.push(`end_date=${e}`);
-      return `${base}/api/${endpoint}${params.length? '?'+params.join('&'): ''}`;
+      const start = document.getElementById("startDate").value;
+      const end = document.getElementById("endDate").value;
+      let q = start ? `start_date=${start}` : "";
+      q += end ? `${q ? '&' : ''}end_date=${end}` : "";
+      return `${base}/api/${endpoint}${q ? '?' + q : ''}`;
     }
+
     async function loadStatusMetrics() {
-      const data = await (await fetch(buildUrl("technician-status"))).json();
+      const res = await fetch(buildUrl("technician-status"));
+      const data = await res.json();
       document.getElementById("totalTech").innerText = data.length;
       let s=0,f=0,p=0;
       data.forEach(r=>{ s+=r.success_count; f+=r.failed_count; p+=r.stopped_count; });
       document.getElementById("sumSuccess").innerText = s;
       document.getElementById("sumFailed").innerText = f;
+      document.getElementById("sumStopped").innerText = p;
     }
+
     async function loadStatusChart() {
-      const data = await (await fetch(buildUrl("technician-status"))).json();
-      let s=0,f=0;
-      data.forEach(r=>{ s+=r.success_count; f+=r.failed_count; });
-      new Chart(document.getElementById("statusChart"), {type:'pie', data:{labels:['Uğurla','Uğursuz'], datasets:[{data:[s,f]}]}, options:{responsive:true,plugins:{legend:{position:'bottom'}}}});
+      const res = await fetch(buildUrl("technician-status"));
+      const data = await res.json();
+      let s=0,f=0,p=0; data.forEach(r=>{ s+=r.success_count; f+=r.failed_count; p+=r.stopped_count; });
+      new Chart(document.getElementById("statusChart"), {
+        type: 'pie',
+        data: {
+          labels: ['Uğurla tamamlandı','Uğursuz oldu'],
+          datasets:[{ data:[s,f,p] }]
+        },
+        options:{ responsive:true, plugins:{ legend:{ position:'bottom' } } }
+      });
     }
+
     async function loadStatusTable() {
-      const data = await (await fetch(buildUrl("technician-status"))).json();
-      const tbody = document.getElementById("statusTable"); tbody.innerHTML = '';
-      data.forEach((r,i)=>{
-        tbody.innerHTML += `<tr><td class="px-4 py-2">${i+1}</td><td class="px-4 py-2">${r.full_name}</td><td class="px-4 py-2">${r.success_count}</td><td class="px-4 py-2">${r.failed_count}</td><td class="px-4 py-2">${r.stopped_count}</td></tr>`;
+      const res = await fetch(buildUrl("technician-status"));
+      const data = await res.json();
+      const tbody = document.getElementById("statusTable");
+      tbody.innerHTML = "";
+      data.forEach((r,i)=> {
+        tbody.innerHTML += `
+          <tr class="hover:bg-gray-100 dark:hover:bg-gray-700">
+            <td class="px-4 py-2">${i+1}</td>
+            <td class="px-4 py-2">${r.full_name}</td>
+            <td class="px-4 py-2">${r.success_count}</td>
+            <td class="px-4 py-2">${r.failed_count}</td>
+            <td class="px-4 py-2">${r.stopped_count}</td>
+          </tr>`;
       });
     }
-    async function loadHistory() {
-      const data = await (await fetch(buildUrl("technician-history"))).json();
-      const byTech = {};
-      data.forEach(r=>{ byTech[r.full_name] = byTech[r.full_name]||[]; byTech[r.full_name].push(r);} );
-      const c = document.getElementById("historyContainer"); c.innerHTML='';
-      Object.entries(byTech).forEach(([tech, acts])=>{
-        const div = document.createElement('div');
-        div.innerHTML = `<h3 class="text-xl font-medium mb-2">${tech}</h3><table class="w-full table-auto border-collapse mb-4"><thead><tr><th class="p-2 border">Tarix</th><th class="p-2 border">Başladı</th><th class="p-2 border">Bitdi</th><th class="p-2 border">Tip</th><th class="p-2 border">Status</th><th class="p-2 border">Avadanlıq</th></tr></thead><tbody>${acts.map(a=>`<tr class="hover:bg-gray-50 dark:hover:bg-gray-700"><td class="p-2 border">${a.date}</td><td class="p-2 border">${a.start}</td><td class="p-2 border">${a.end}</td><td class="p-2 border">${a.type}</td><td class="p-2 border">${a.status}</td><td class="p-2 border">${a.equipment.length? a.equipment.map(eq=>`${eq.name}×${eq.qty}`).join(', '): '–'}</td></tr>`).join('')}</tbody></table>`;
-        c.appendChild(div);
-      });
-    }
-    document.addEventListener("DOMContentLoaded", ()=>{
-      const today = new Date().toISOString().split('T')[0];
-      document.getElementById('startDate').value = today.replace(/-.+$/, '-01');
-      document.getElementById('endDate').value = today;
-      loadStatusMetrics(); loadStatusChart(); loadStatusTable(); loadHistory();
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const today = new Date().toISOString().split("T")[0];
+      document.getElementById("startDate").value = today.replace(/-.+$/, "-01");
+      document.getElementById("endDate").value = today;
+      loadStatusMetrics();
+      loadStatusChart();
+      loadStatusTable();
     });
-    document.getElementById("btnRefresh").addEventListener("click", ()=>{ loadStatusMetrics(); loadStatusChart(); loadStatusTable(); loadHistory(); });
+    document.getElementById("btnRefresh").addEventListener("click", () => {
+      loadStatusMetrics();
+      loadStatusChart();
+      loadStatusTable();
+    });
   </script>
 </body>
 </html>
