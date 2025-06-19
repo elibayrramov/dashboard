@@ -248,57 +248,46 @@ def status_dashboard():
   <nav class="bg-white dark:bg-gray-800 shadow-md">
     <div class="container mx-auto px-6 py-4 flex justify-between items-center">
       <h1 class="text-2xl font-semibold">Technician Status</h1>
-      <div class="flex items-center space-x-4">
-        <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
-          <i data-feather="moon"></i>
-        </button>
-      </div>
+      <button id="theme-toggle" class="p-2 rounded-full hover:bg-gray-200 dark:hover:bg-gray-700 transition">
+        <i data-feather="moon"></i>
+      </button>
     </div>
   </nav>
-
   <main class="container mx-auto px-6 py-8 space-y-8">
     <!-- Filter -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <div>
         <label for="startDate" class="block text-sm font-medium mb-1">Başlanğıc Tarix</label>
-        <input type="date" id="startDate" class="w-full px-3 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition" />
+        <input type="date" id="startDate" class="w-full px-3 py-2 border rounded-lg" />
       </div>
       <div>
         <label for="endDate" class="block text-sm font-medium mb-1">Son Tarix</label>
-        <input type="date" id="endDate" class="w-full px-3 py-2 border rounded-lg focus:ring-indigo-500 focus:border-indigo-500 transition" />
+        <input type="date" id="endDate" class="w-full px-3 py-2 border rounded-lg" />
       </div>
       <div class="flex items-end">
-        <button id="btnRefresh" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
-          Yenilə
-        </button>
+        <button id="btnRefresh" class="w-full px-4 py-2 bg-indigo-600 text-white rounded-lg">Yenilə</button>
       </div>
     </div>
-
     <!-- Metrics -->
     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow hover:shadow-lg transition">
-        <h3 class="text-sm font-medium text-gray-500 dark:text-gray-400">Ümumi Technician</h3>
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
+        <h3 class="text-sm font-medium text-gray-500">Ümumi Technician</h3>
         <p id="totalTech" class="mt-2 text-3xl font-bold">--</p>
       </div>
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow hover:shadow-lg transition">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
         <h3 class="text-sm font-medium text-green-600">Uğurla tamamlandı</h3>
         <p id="sumSuccess" class="mt-2 text-3xl font-bold">--</p>
       </div>
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow hover:shadow-lg transition">
+      <div class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
         <h3 class="text-sm font-medium text-red-600">Uğursuz oldu</h3>
         <p id="sumFailed" class="mt-2 text-3xl font-bold">--</p>
       </div>
     </div>
-
     <!-- Chart -->
-    <!-- Chart (Centered & Smaller) -->
     <section class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow max-w-md mx-auto">
       <h2 class="text-lg font-semibold mb-4 text-center">Status Paylanması</h2>
-      <div class="flex justify-center">
-        <canvas id="statusChart" class="w-full h-48"></canvas>
-      </div>
+      <canvas id="statusChart" class="w-full h-48"></canvas>
     </section>
-
     <!-- Table -->
     <section class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
       <h2 class="text-lg font-semibold mb-4">Detallı Technician Status</h2>
@@ -306,92 +295,75 @@ def status_dashboard():
         <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
           <thead class="bg-gray-50 dark:bg-gray-700">
             <tr>
-              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">#</th>
-              <th class="px-4 py-2 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase">Adı</th>
-              <th class="px-4 py-2 text-left text-xs font-medium text-green-600 uppercase">Uğurla</th>
-              <th class="px-4 py-2 text-left text-xs font-medium text-red-600 uppercase">Uğursuz</th>
+              <th class="px-4 py-2">#</th>
+              <th class="px-4 py-2">Adı</th>
+              <th class="px-4 py-2 text-green-600">Uğurla</th>
+              <th class="px-4 py-2 text-red-600">Uğursuz</th>
+              <th class="px-4 py-2">Dayandırıldı</th>
             </tr>
           </thead>
-          <tbody id="statusTable" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
-            <!-- JS will inject rows here -->
-          </tbody>
-        </table>
+          <tbody id="statusTable" class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700"></tbody>
       </div>
     </section>
+    <!-- History Section -->
+    <section class="bg-white dark:bg-gray-800 p-6 rounded-xl shadow">
+      <h2 class="text-lg font-semibold mb-4">🔍 Aktivlik Tarixçəsi (Detallı)</h2>
+      <div id="historyContainer" class="space-y-6"></div>
+    </section>
   </main>
-
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script>
     feather.replace();
     const toggle = document.getElementById('theme-toggle');
-    toggle.addEventListener('click', () => {
-      document.documentElement.classList.toggle('dark');
-    });
-
+    toggle.addEventListener('click', () => document.documentElement.classList.toggle('dark'));
     function buildUrl(endpoint) {
       const base = window.location.origin;
-      const start = document.getElementById("startDate").value;
-      const end = document.getElementById("endDate").value;
-      let q = start ? `start_date=${start}` : "";
-      q += end ? `${q ? '&' : ''}end_date=${end}` : "";
-      return `${base}/api/${endpoint}${q ? '?' + q : ''}`;
+      const params = [];
+      const s = document.getElementById("startDate").value;
+      const e = document.getElementById("endDate").value;
+      if (s) params.push(`start_date=${s}`);
+      if (e) params.push(`end_date=${e}`);
+      return `${base}/api/${endpoint}${params.length? '?'+params.join('&'): ''}`;
     }
-
     async function loadStatusMetrics() {
-      const res = await fetch(buildUrl("technician-status"));
-      const data = await res.json();
+      const data = await (await fetch(buildUrl("technician-status"))).json();
       document.getElementById("totalTech").innerText = data.length;
       let s=0,f=0,p=0;
       data.forEach(r=>{ s+=r.success_count; f+=r.failed_count; p+=r.stopped_count; });
       document.getElementById("sumSuccess").innerText = s;
       document.getElementById("sumFailed").innerText = f;
-      document.getElementById("sumStopped").innerText = p;
     }
-
     async function loadStatusChart() {
-      const res = await fetch(buildUrl("technician-status"));
-      const data = await res.json();
-      let s=0,f=0,p=0; data.forEach(r=>{ s+=r.success_count; f+=r.failed_count; p+=r.stopped_count; });
-      new Chart(document.getElementById("statusChart"), {
-        type: 'pie',
-        data: {
-          labels: ['Uğurla tamamlandı','Uğursuz oldu'],
-          datasets:[{ data:[s,f,p] }]
-        },
-        options:{ responsive:true, plugins:{ legend:{ position:'bottom' } } }
-      });
+      const data = await (await fetch(buildUrl("technician-status"))).json();
+      let s=0,f=0;
+      data.forEach(r=>{ s+=r.success_count; f+=r.failed_count; });
+      new Chart(document.getElementById("statusChart"), {type:'pie', data:{labels:['Uğurla','Uğursuz'], datasets:[{data:[s,f]}]}, options:{responsive:true,plugins:{legend:{position:'bottom'}}}});
     }
-
     async function loadStatusTable() {
-      const res = await fetch(buildUrl("technician-status"));
-      const data = await res.json();
-      const tbody = document.getElementById("statusTable");
-      tbody.innerHTML = "";
-      data.forEach((r,i)=> {
-        tbody.innerHTML += `
-          <tr class="hover:bg-gray-100 dark:hover:bg-gray-700">
-            <td class="px-4 py-2">${i+1}</td>
-            <td class="px-4 py-2">${r.full_name}</td>
-            <td class="px-4 py-2">${r.success_count}</td>
-            <td class="px-4 py-2">${r.failed_count}</td>
-            <td class="px-4 py-2">${r.stopped_count}</td>
-          </tr>`;
+      const data = await (await fetch(buildUrl("technician-status"))).json();
+      const tbody = document.getElementById("statusTable"); tbody.innerHTML = '';
+      data.forEach((r,i)=>{
+        tbody.innerHTML += `<tr><td class="px-4 py-2">${i+1}</td><td class="px-4 py-2">${r.full_name}</td><td class="px-4 py-2">${r.success_count}</td><td class="px-4 py-2">${r.failed_count}</td><td class="px-4 py-2">${r.stopped_count}</td></tr>`;
       });
     }
-
-    document.addEventListener("DOMContentLoaded", () => {
-      const today = new Date().toISOString().split("T")[0];
-      document.getElementById("startDate").value = today.replace(/-.+$/, "-01");
-      document.getElementById("endDate").value = today;
-      loadStatusMetrics();
-      loadStatusChart();
-      loadStatusTable();
+    async function loadHistory() {
+      const data = await (await fetch(buildUrl("technician-history"))).json();
+      const byTech = {};
+      data.forEach(r=>{ byTech[r.full_name] = byTech[r.full_name]||[]; byTech[r.full_name].push(r);} );
+      const c = document.getElementById("historyContainer"); c.innerHTML='';
+      Object.entries(byTech).forEach(([tech, acts])=>{
+        const div = document.createElement('div');
+        div.innerHTML = `<h3 class="text-xl font-medium mb-2">${tech}</h3><table class="w-full table-auto border-collapse mb-4"><thead><tr><th class="p-2 border">Tarix</th><th class="p-2 border">Başladı</th><th class="p-2 border">Bitdi</th><th class="p-2 border">Tip</th><th class="p-2 border">Status</th><th class="p-2 border">Avadanlıq</th></tr></thead><tbody>${acts.map(a=>`<tr class="hover:bg-gray-50 dark:hover:bg-gray-700"><td class="p-2 border">${a.date}</td><td class="p-2 border">${a.start}</td><td class="p-2 border">${a.end}</td><td class="p-2 border">${a.type}</td><td class="p-2 border">${a.status}</td><td class="p-2 border">${a.equipment.length? a.equipment.map(eq=>`${eq.name}×${eq.qty}`).join(', '): '–'}</td></tr>`).join('')}</tbody></table>`;
+        c.appendChild(div);
+      });
+    }
+    document.addEventListener("DOMContentLoaded", ()=>{
+      const today = new Date().toISOString().split('T')[0];
+      document.getElementById('startDate').value = today.replace(/-.+$/, '-01');
+      document.getElementById('endDate').value = today;
+      loadStatusMetrics(); loadStatusChart(); loadStatusTable(); loadHistory();
     });
-    document.getElementById("btnRefresh").addEventListener("click", () => {
-      loadStatusMetrics();
-      loadStatusChart();
-      loadStatusTable();
-    });
+    document.getElementById("btnRefresh").addEventListener("click", ()=>{ loadStatusMetrics(); loadStatusChart(); loadStatusTable(); loadHistory(); });
   </script>
 </body>
 </html>
